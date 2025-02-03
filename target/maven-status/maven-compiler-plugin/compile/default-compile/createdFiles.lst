@@ -1,0 +1,4 @@
+productModel\Product.class
+com\mycompany\taller_server\Taller_Server.class
+server\ServerProduct.class
+controller\ControllerProduct.class
