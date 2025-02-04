@@ -4,12 +4,15 @@
  */
 package productModel;
 
+import java.io.Serializable;
+
 /**
  *
  * @author DESARROLLADOR_J.ADVA
  */
-public class Product {
+public class Product implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     public long id;
     public String name;
     public String description;

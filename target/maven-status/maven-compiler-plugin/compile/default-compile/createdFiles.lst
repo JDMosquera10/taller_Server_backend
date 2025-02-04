@@ -1,4 +1,7 @@
 productModel\Product.class
 com\mycompany\taller_server\Taller_Server.class
-server\ServerProduct.class
+request\Response.class
 controller\ControllerProduct.class
+server\ClientHandler.class
+request\Request.class
+server\ServerProduct.class

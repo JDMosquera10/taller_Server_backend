@@ -7,6 +7,8 @@ package controller;
 import java.util.ArrayList;
 import java.util.Optional;
 import productModel.Product;
+import request.Request;
+import request.Response;
 
 /**
  *
@@ -20,85 +22,151 @@ public class ControllerProduct {
 
     }
 
-    public String actionscontroller(String action, String[] parts) {
-        switch (action) {
+    /**
+     * controlador que orquesta las peticiones del cliente y retorna las
+     * respectivas respuestas.
+     *
+     * @param request cuerpo de la petición.
+     */
+    public Response actionscontroller(Request request) {
+        Response response = new Response();
+        Product productRequest = request.getProduct();
+        boolean status = false;
+        switch (request.getAction()) {
             case "add":
-                return addPoduct(parts[1], parts[2], Double.parseDouble(parts[3]), Integer.parseInt(parts[4]));
+                if (productRequest instanceof Product) {
+                    status = addPoduct(productRequest);
+                } else {
+                    response.setMenssage("El tipo de dato enviado en el request no es correcto.");
+                }
+                if (status) {
+                    response.setStatus(true);
+                    response.setMenssage("El producto fue creado correctamente.");
+                } else {
+                    response.setMenssage("Ocurrio un error interno");
+                }
+                return response;
             case "update":
-                return updatePoduct(Long.parseLong(parts[1]), parts[2], parts[3], Double.parseDouble(parts[4]), Integer.parseInt(parts[5]));
+                if (productRequest instanceof Product) {
+                    status = updatePoduct(productRequest);
+                } else {
+                    response.setMenssage("El tipo de dato enviado en el request no es correcto.");
+                }
+                if (status) {
+                    response.setStatus(true);
+                    response.setMenssage("El producto fue creado correctamente.");
+                } else {
+                    response.setMenssage("Ocurrio un error interno");
+                }
+
             case "find":
-                return getPoductByName(parts[1]);
+                if (!request.getNameFilter().equals("")) {
+                    Product producfinded = getPoductByName(request.getNameFilter());
+                    response.setProduct(producfinded);
+                    response.setStatus(true);
+                    response.setMenssage("Busqueda exitosa.");
+
+                } else {
+                    response.setMenssage("Es requerido enviar un nombre para poder buscar el producto.");
+                }
+                return response;
             case "remove":
-                return removeProductById(Integer.parseInt(parts[1]));
+                status = removeProductById(Integer.parseInt(request.getNameFilter()));
+                if (status) {
+                    response.setStatus(true);
+                    response.setMenssage("El producto fue eliminado correctamente.");
+                } else {
+                    response.setMenssage("Ocurrio un error interno.");
+                }
+                return response;
+            case "view":
+                System.out.println("antes de agregar" + listProducts.size());
+
+                response.setListProduct(listProducts);
+                System.out.println("lista de productos de la respuesta " + response.getListProduct().size());
+                response.setStatus(true);
+                return response;
             default:
-                return "Acción no válida.";
+                response.setStatus(true);
+                response.setMenssage("Acción no válida.");
+                return response;
+
         }
     }
 
-    public String addPoduct(String name, String description, double price, int available) {
+    /**
+     * Función que agrega un producto.
+     *
+     * @param product producto a agregar.
+     * @return boolean
+     */
+    public boolean addPoduct(Product product) {
         try {
-            long code = generarCodigo(7);
-            Product newProduct = new Product(code, name, description, price, available);
-            listProducts.add(newProduct);
-            return "Producto agregado exitosamente";
+            // long code = generarCodigo(7);
+            // Product newProduct = new Product(code, name, description, price, available);
+            listProducts.add(product);
+            return true;
         } catch (Exception e) {
-            return "Ocurrio un error al intentar agregar un producto";
+            System.out.println(e.getMessage());
+            return false;
         }
     }
 
-    public long generarCodigo(int longitud) {
-        long minimo = (long) Math.pow(10, longitud - 1);
-        long maximo = (long) Math.pow(10, longitud) - 1;
-        return minimo + (int) (Math.random() * (maximo - minimo + 1));
-    }
-
-    public String updatePoduct(long id, String name, String description, double price, int available) {
+    /**
+     * Función que edita un producto.
+     *
+     * @param product producto a agregar.
+     * @return boolean
+     */
+    public boolean updatePoduct(Product product) {
         try {
-            Optional<String> response = listProducts.stream()
-                    .filter(p -> p.getId() == id)
+            boolean response = listProducts.stream()
+                    .filter(p -> p.getId() == product.getId())
                     .findFirst()
                     .map(pr -> {
-                        pr.setName(name);
-                        pr.setDescription(description);
-                        pr.setPrice(price);
-                        pr.setAvailable(available);
-                        return "Producto actualizado correctamente.";
-                    });
-
-            String mensaje = response.orElse("Producto no encontrado.");
-
-            return mensaje;
+                        pr.setName(product.getName());
+                        pr.setDescription(product.getDescription());
+                        pr.setPrice(product.getPrice());
+                        pr.setAvailable(product.getAvailable());
+                        return true;
+                    })
+                    .orElse(false);
+            return response;
         } catch (Exception e) {
-            return e.getMessage();
+            System.out.println(e.getMessage());
+            return false;
         }
     }
 
-    public String getPoductByName(String name) {
+    /**
+     * Función que edita un producto.
+     *
+     * @param name nombre del producto a buscar.
+     * @return Product
+     */
+    public Product getPoductByName(String name) {
         try {
-            Optional<Product> productFinded = listProducts.stream()
+            return listProducts.stream()
                     .filter(p -> p.getName().equals(name))
-                    .findFirst();
-
-            if (productFinded.isPresent()) {
-                return "Producto encontrado : " + productFinded.get();
-            } else {
-                return "Producto no encontrado.";
-            }
+                    .findFirst().orElse(null);
         } catch (Exception e) {
-            return e.getMessage();
+            System.out.println(e.getMessage());
+            return null;
         }
     }
 
-    public String removeProductById(int id) {
+    /**
+     * Función que edita un producto.
+     *
+     * @param id id del producto a remover.
+     * @return boolean
+     */
+    public boolean removeProductById(int id) {
         try {
-            boolean isRemoved = listProducts.removeIf(product -> product.getId() == id);
-            if (isRemoved) {
-                return "Producto eliminado correctamente.";
-            } else {
-                return "Producto no encontrado.";
-            }
+            return listProducts.removeIf(product -> product.getId() == id);
         } catch (Exception e) {
-            return e.getMessage();
+            System.out.println(e.getMessage());
+            return false;
         }
     }
 
